@@ -9,16 +9,11 @@ import Link from "next/link";
 import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
-
-const AuthCredentialsValidator = z.object({
-  email: z.string().email(),
-  password: z.string().min(9, {
-    message: "Password must be at least 8 characters long.",
-  }),
-});
-
-type TAuthCredentialsValidator = z.infer<typeof AuthCredentialsValidator>;
+import {
+  AuthCredentialsValidator,
+  TAuthCredentialsValidator,
+} from "@/lib/validators/accountCredentialsValidator";
+import { trpc } from "@/trpc/client";
 
 const Page = () => {
   const {
@@ -28,6 +23,12 @@ const Page = () => {
   } = useForm<TAuthCredentialsValidator>({
     resolver: zodResolver(AuthCredentialsValidator),
   });
+
+  const { mutate, isLoading } = trpc.auth.createPayloadUser.useMutation({});
+
+  const onSubmit = ({ email, password }: TAuthCredentialsValidator) => {
+    mutate({ email, password });
+  };
 
   return (
     <>
@@ -49,14 +50,14 @@ const Page = () => {
             </Link>
           </div>
           <div className="grid gap-6">
-            <form onSubmit={() => {}}>
+            <form onSubmit={handleSubmit(onSubmit)}>
               <div className="grid gap-2">
                 <div className="grid gap-1 py-2">
                   <Label htmlFor="email">Email</Label>
                   <Input
                     {...register("email")}
                     className={cn({
-                      "focus-visible:ring-red-500": true,
+                      "focus-visible:ring-red-500": errors.email,
                     })}
                     placeholder="you@example.com"
                   />
@@ -65,8 +66,9 @@ const Page = () => {
                   <Label htmlFor="password">Password</Label>
                   <Input
                     {...register("password")}
+                    type="password"
                     className={cn({
-                      "focus-visible:ring-red-500": true,
+                      "focus-visible:ring-red-500": errors.password,
                     })}
                     placeholder="password"
                   />
