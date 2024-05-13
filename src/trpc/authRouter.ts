@@ -38,4 +38,25 @@ export const authRouter = router({
         sentToEmail: email,
       };
     }),
+  signIn: publicProcedure
+    .input(AuthCredentialsValidator)
+    .mutation(async ({ input, ctx }) => {
+      const { res } = ctx;
+      const { email, password } = input;
+
+      const payload = await getPayloadClient();
+
+      try {
+        await payload.login({
+          collection: "users",
+          data: {
+            email,
+            password,
+          },
+          res,
+        });
+      } catch (err) {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+    }),
 });
